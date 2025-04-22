@@ -98,7 +98,12 @@ export default function BorrowedBooksScreen({ navigation }) {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>{error}</Text>
-        <Button mode="contained" onPress={fetchBorrowedBooks} style={styles.retryButton}>
+        <Button
+          mode="contained"
+          onPress={fetchBorrowedBooks}
+          style={styles.retryButton}
+          icon={({ size, color }) => <Ionicons name="refresh" size={size} color={color} />}
+        >
           Retry
         </Button>
       </View>
@@ -109,7 +114,9 @@ export default function BorrowedBooksScreen({ navigation }) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>My Borrowed Books</Text>
+          <Text style={styles.headerTitle}>
+            <Ionicons name="bookmark" size={22} color={colors.white} style={styles.headerIcon} /> My Borrowed Books
+          </Text>
         </View>
         <View style={styles.emptyContainer}>
           <Ionicons name="book-outline" size={64} color={colors.lightGray} />
@@ -117,7 +124,12 @@ export default function BorrowedBooksScreen({ navigation }) {
           <Text style={styles.emptyMessage}>
             You haven't borrowed any books yet. Browse the catalog to find books to borrow.
           </Text>
-          <Button mode="contained" style={styles.browseButton} onPress={() => navigation.navigate("Home")}>
+          <Button
+            mode="contained"
+            style={styles.browseButton}
+            onPress={() => navigation.navigate("Home")}
+            icon={({ size, color }) => <Ionicons name="search" size={size} color={color} />}
+          >
             Browse Books
           </Button>
         </View>
@@ -128,7 +140,9 @@ export default function BorrowedBooksScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Borrowed Books</Text>
+        <Text style={styles.headerTitle}>
+          <Ionicons name="bookmark" size={22} color={colors.white} style={styles.headerIcon} /> My Borrowed Books
+        </Text>
       </View>
 
       <FlatList
@@ -169,6 +183,11 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     color: colors.white,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  headerIcon: {
+    marginRight: 8,
   },
   list: {
     padding: 16,
