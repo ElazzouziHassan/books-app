@@ -6,6 +6,7 @@ import { TextInput, Button, Text } from "react-native-paper"
 import { useAuth } from "../context/AuthContext"
 import { API_URL } from "../config"
 import { colors } from "../theme/colors"
+import { Ionicons } from "@expo/vector-icons"
 
 export default function AddEditBookScreen({ route, navigation }) {
   const book = route.params?.book
@@ -101,7 +102,15 @@ export default function AddEditBookScreen({ route, navigation }) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{isEditing ? "Edit Book" : "Add New Book"}</Text>
+        <Text style={styles.headerTitle}>
+          <Ionicons
+            name={isEditing ? "create" : "add-circle"}
+            size={22}
+            color={colors.white}
+            style={styles.headerIcon}
+          />
+          {isEditing ? "Edit Book" : "Add New Book"}
+        </Text>
       </View>
 
       <View style={styles.formContainer}>
@@ -118,6 +127,7 @@ export default function AddEditBookScreen({ route, navigation }) {
           mode="outlined"
           outlineColor={colors.lightBlueGray}
           activeOutlineColor={colors.royalBlue}
+          left={<TextInput.Icon icon={({ size, color }) => <Ionicons name="book" size={size} color={color} />} />}
         />
 
         <TextInput
@@ -128,6 +138,7 @@ export default function AddEditBookScreen({ route, navigation }) {
           mode="outlined"
           outlineColor={colors.lightBlueGray}
           activeOutlineColor={colors.royalBlue}
+          left={<TextInput.Icon icon={({ size, color }) => <Ionicons name="person" size={size} color={color} />} />}
         />
 
         <TextInput
@@ -138,6 +149,7 @@ export default function AddEditBookScreen({ route, navigation }) {
           mode="outlined"
           outlineColor={colors.lightBlueGray}
           activeOutlineColor={colors.royalBlue}
+          left={<TextInput.Icon icon={({ size, color }) => <Ionicons name="barcode" size={size} color={color} />} />}
         />
 
         <TextInput
@@ -149,6 +161,7 @@ export default function AddEditBookScreen({ route, navigation }) {
           keyboardType="numeric"
           outlineColor={colors.lightBlueGray}
           activeOutlineColor={colors.royalBlue}
+          left={<TextInput.Icon icon={({ size, color }) => <Ionicons name="calendar" size={size} color={color} />} />}
         />
 
         <TextInput
@@ -160,6 +173,7 @@ export default function AddEditBookScreen({ route, navigation }) {
           placeholder="https://example.com/book-cover.jpg"
           outlineColor={colors.lightBlueGray}
           activeOutlineColor={colors.royalBlue}
+          left={<TextInput.Icon icon={({ size, color }) => <Ionicons name="image" size={size} color={color} />} />}
         />
 
         <TextInput
@@ -172,17 +186,32 @@ export default function AddEditBookScreen({ route, navigation }) {
           numberOfLines={6}
           outlineColor={colors.lightBlueGray}
           activeOutlineColor={colors.royalBlue}
+          left={
+            <TextInput.Icon icon={({ size, color }) => <Ionicons name="document-text" size={size} color={color} />} />
+          }
         />
 
-        <Button
-          mode="contained"
-          onPress={handleSaveBook}
-          style={styles.saveButton}
-          loading={loading}
-          disabled={loading}
-        >
-          {isEditing ? "Update Book" : "Add Book"}
-        </Button>
+        <View style={styles.buttonContainer}>
+          <Button
+            mode="outlined"
+            onPress={() => navigation.goBack()}
+            style={styles.cancelButton}
+            icon={({ size, color }) => <Ionicons name="close" size={size} color={color} />}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            mode="contained"
+            onPress={handleSaveBook}
+            style={styles.saveButton}
+            loading={loading}
+            disabled={loading}
+            icon={({ size, color }) => <Ionicons name="save" size={size} color={color} />}
+          >
+            {isEditing ? "Update Book" : "Add Book"}
+          </Button>
+        </View>
       </View>
     </ScrollView>
   )
@@ -203,6 +232,11 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     color: colors.white,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  headerIcon: {
+    marginRight: 8,
   },
   formContainer: {
     padding: 16,
@@ -230,9 +264,21 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     backgroundColor: colors.white,
   },
-  saveButton: {
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 32,
+  },
+  saveButton: {
+    flex: 1,
+    marginLeft: 8,
     paddingVertical: 8,
     backgroundColor: colors.royalBlue,
+  },
+  cancelButton: {
+    flex: 1,
+    marginRight: 8,
+    paddingVertical: 8,
+    borderColor: colors.lightBlueGray,
   },
 })
