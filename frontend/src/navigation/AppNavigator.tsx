@@ -79,7 +79,7 @@ function ManageStack() {
 
 function ProfileStack() {
   return (
-    <Stack.Navigator
+    <Stack.Navigator 
       screenOptions={{
         headerStyle: { backgroundColor: colors.darkNavy },
         headerTintColor: colors.white,
@@ -109,7 +109,7 @@ function MainTabs() {
             iconName = focused ? "person" : "person-outline"
           }
 
-          return <Ionicons size={size} color={color} />
+          return <Ionicons name={iconName} size={size} color={color} />
         },
         tabBarActiveTintColor: colors.royalBlue,
         tabBarInactiveTintColor: colors.lightBlueGray,
@@ -139,7 +139,7 @@ export default function AppNavigator() {
   const { token, isLoading } = useAuth()
 
   if (isLoading) {
-    return null // Or a loading screen
+    return null 
   }
 
   return (
