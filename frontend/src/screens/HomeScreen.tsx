@@ -8,6 +8,7 @@ import { API_URL } from "../config"
 import type { Book } from "../types"
 import BookCard from "../components/BookCard"
 import { colors } from "../theme/colors"
+import { Ionicons } from "@expo/vector-icons"
 
 export default function HomeScreen({ navigation }) {
   const [books, setBooks] = useState<Book[]>([])
@@ -17,7 +18,7 @@ export default function HomeScreen({ navigation }) {
   const [error, setError] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
   const [borrowingBookId, setBorrowingBookId] = useState<number | null>(null)
-  const { token } = useAuth()
+  const { token, user } = useAuth()
 
   useEffect(() => {
     fetchBooks()
@@ -70,7 +71,12 @@ export default function HomeScreen({ navigation }) {
     fetchBooks()
   }
 
-  const handleBorrowBook = async (bookId: number) => {
+  const handleBorrowBook = async (bookId: number, userId: number | undefined) => {
+    // Check if the book belongs to the current user
+    if (userId === user?.id) {
+      return
+    }
+
     try {
       setBorrowingBookId(bookId)
 
@@ -116,7 +122,12 @@ export default function HomeScreen({ navigation }) {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>{error}</Text>
-        <Button mode="contained" onPress={fetchBooks} style={styles.retryButton}>
+        <Button
+          mode="contained"
+          onPress={fetchBooks}
+          style={styles.retryButton}
+          icon={({ size, color }) => <Ionicons name="refresh" size={size} color={color} />}
+        >
           Retry
         </Button>
       </View>
@@ -126,7 +137,9 @@ export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Available Books</Text>
+        <Text style={styles.headerTitle}>
+          <Ionicons name="library" size={22} color={colors.white} style={styles.headerIcon} /> Available Books
+        </Text>
       </View>
 
       <Searchbar
@@ -140,11 +153,17 @@ export default function HomeScreen({ navigation }) {
 
       {displayedBooks.length === 0 ? (
         <View style={styles.centered}>
+          <Ionicons name="search" size={64} color={colors.lightGray} style={styles.emptyIcon} />
           <Text style={styles.noResultsText}>
             {searchQuery ? "No books match your search" : "No books available at the moment"}
           </Text>
           {searchQuery && (
-            <Button mode="outlined" onPress={() => setSearchQuery("")} style={styles.clearButton}>
+            <Button
+              mode="outlined"
+              onPress={() => setSearchQuery("")}
+              style={styles.clearButton}
+              icon={({ size, color }) => <Ionicons name="close-circle" size={size} color={color} />}
+            >
               Clear Search
             </Button>
           )}
@@ -156,9 +175,16 @@ export default function HomeScreen({ navigation }) {
             <BookCard
               book={item}
               onPress={() => navigation.navigate("BookDetails", { bookId: item.id })}
-              onBorrow={() => handleBorrowBook(item.id)}
+              onBorrow={() => {
+                if (item.userId === user?.id) {
+                  Alert.alert("Cannot Borrow", "You cannot borrow your own book.")
+                  return
+                }
+                handleBorrowBook(item.id, item.userId)
+              }}
               showBorrowButton={true}
               isLoading={borrowingBookId === item.id}
+              isOwnedByUser={item.userId === user?.id}
             />
           )}
           keyExtractor={(item) => item.id.toString()}
@@ -187,6 +213,11 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     color: colors.white,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  headerIcon: {
+    marginRight: 8,
   },
   searchBar: {
     marginHorizontal: 16,
@@ -221,5 +252,9 @@ const styles = StyleSheet.create({
     color: colors.lightBlueGray,
     fontSize: 16,
     textAlign: "center",
+    marginTop: 12,
+  },
+  emptyIcon: {
+    marginBottom: 16,
   },
 })
