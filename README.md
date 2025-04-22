@@ -374,8 +374,6 @@ The application uses the following database tables:
 - Ensure JWT_SECRET is properly set in the .env file
 - Check that tokens are being properly stored and sent with requests
 
-
-
 ## Contributing
 
 1. Fork the repository
