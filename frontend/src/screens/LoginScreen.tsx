@@ -89,7 +89,7 @@ export default function LoginScreen({ navigation }) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.formContainer}>
-        <Text style={styles.title}>Book Borrowing App</Text>
+        <Text style={styles.title}>Book Borrowing</Text>
         <Text style={styles.subtitle}>Login to your account</Text>
 
         <TextInput
