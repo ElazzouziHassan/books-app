@@ -1,21 +1,23 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { View, FlatList, StyleSheet, ActivityIndicator, Text } from "react-native"
+import { View, FlatList, StyleSheet, ActivityIndicator, Text, RefreshControl, Alert } from "react-native"
 import { Button, FAB, Searchbar } from "react-native-paper"
 import { useAuth } from "../context/AuthContext"
 import { API_URL } from "../config"
 import type { Book } from "../types"
 import BookCard from "../components/BookCard"
 import { colors } from "../theme/colors"
+import { Ionicons } from "@expo/vector-icons"
 
 export default function ManageBooksScreen({ navigation }) {
   const [books, setBooks] = useState<Book[]>([])
   const [filteredBooks, setFilteredBooks] = useState<Book[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [deleting, setDeleting] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const { token } = useAuth()
+  const { token, user } = useAuth()
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
@@ -42,7 +44,7 @@ export default function ManageBooksScreen({ navigation }) {
   const fetchBooks = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`${API_URL}/books`, {
+      const response = await fetch(`${API_URL}/books/user`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -56,11 +58,17 @@ export default function ManageBooksScreen({ navigation }) {
       setBooks(data)
       setFilteredBooks(data)
     } catch (error) {
-      alert("Failed to load books")
+      Alert.alert("Error", "Failed to load books")
       console.error(error)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
+  }
+
+  const handleRefresh = () => {
+    setRefreshing(true)
+    fetchBooks()
   }
 
   const handleDeleteBook = async (bookId: number) => {
@@ -78,19 +86,19 @@ export default function ManageBooksScreen({ navigation }) {
         throw new Error(data.message || "Failed to delete book")
       }
 
-      alert("Book deleted successfully")
+      Alert.alert("Success", "Book deleted successfully")
 
       // Remove the book from the list
       setBooks((prevBooks) => prevBooks.filter((book) => book.id !== bookId))
       setFilteredBooks((prevBooks) => prevBooks.filter((book) => book.id !== bookId))
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to delete book")
+      Alert.alert("Error", error instanceof Error ? error.message : "Failed to delete book")
     } finally {
       setDeleting(null)
     }
   }
 
-  if (loading) {
+  if (loading && !refreshing) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={colors.royalBlue} />
@@ -101,7 +109,9 @@ export default function ManageBooksScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Manage Books</Text>
+        <Text style={styles.headerTitle}>
+          <Ionicons name="settings" size={22} color={colors.white} style={styles.headerIcon} /> Manage My Books
+        </Text>
       </View>
 
       <Searchbar
@@ -114,19 +124,28 @@ export default function ManageBooksScreen({ navigation }) {
       />
 
       {filteredBooks.length === 0 ? (
-        <View style={styles.centered}>
-          <Text style={styles.noResultsText}>No books found</Text>
+        <View style={styles.emptyContainer}>
+          <Ionicons name="library-outline" size={64} color={colors.lightGray} />
+          <Text style={styles.emptyTitle}>No Books Added Yet</Text>
+          <Text style={styles.emptyMessage}>
+            You haven't added any books yet. Add your first book by clicking the + button below.
+          </Text>
         </View>
       ) : (
         <FlatList
           data={filteredBooks}
           renderItem={({ item }) => (
             <View style={styles.bookCardContainer}>
-              <BookCard book={item} onPress={() => navigation.navigate("AddEditBook", { book: item })} />
+              <BookCard
+                book={item}
+                onPress={() => navigation.navigate("BookDetails", { bookId: item.id })}
+                isOwnedByUser={true}
+              />
               <View style={styles.actionButtons}>
                 <Button
                   mode="contained"
                   style={styles.editButton}
+                  icon={({ size, color }) => <Ionicons name="create-outline" size={size} color={color} />}
                   onPress={() => navigation.navigate("AddEditBook", { book: item })}
                 >
                   Edit
@@ -134,17 +153,19 @@ export default function ManageBooksScreen({ navigation }) {
                 <Button
                   mode="contained"
                   style={styles.deleteButton}
+                  icon={({ size, color }) => <Ionicons name="trash-outline" size={size} color={color} />}
                   loading={deleting === item.id}
                   disabled={deleting === item.id || !item.available}
                   onPress={() => {
                     if (!item.available) {
-                      alert("Cannot delete a book that is currently borrowed")
+                      Alert.alert("Cannot Delete", "Cannot delete a book that is currently borrowed")
                       return
                     }
 
-                    if (confirm(`Are you sure you want to delete "${item.title}"?`)) {
-                      handleDeleteBook(item.id)
-                    }
+                    Alert.alert("Confirm Delete", `Are you sure you want to delete "${item.title}"?`, [
+                      { text: "Cancel", style: "cancel" },
+                      { text: "Delete", style: "destructive", onPress: () => handleDeleteBook(item.id) },
+                    ])
                   }}
                 >
                   Delete
@@ -154,10 +175,18 @@ export default function ManageBooksScreen({ navigation }) {
           )}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[colors.royalBlue]} />
+          }
         />
       )}
 
-      <FAB style={styles.fab} icon="plus" color={colors.white} onPress={() => navigation.navigate("AddEditBook")} />
+      <FAB
+        style={styles.fab}
+        icon={({ size, color }) => <Ionicons name="add" size={size} color={color} />}
+        color={colors.white}
+        onPress={() => navigation.navigate("AddEditBook")}
+      />
     </View>
   )
 }
@@ -177,6 +206,11 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     color: colors.white,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  headerIcon: {
+    marginRight: 8,
   },
   searchBar: {
     marginHorizontal: 16,
@@ -187,6 +221,7 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: 16,
+    paddingBottom: 80, // Extra padding for FAB
   },
   bookCardContainer: {
     marginBottom: 24,
@@ -209,9 +244,24 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  noResultsText: {
-    color: colors.lightBlueGray,
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  emptyTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: colors.darkNavy,
+    marginTop: 16,
+    marginBottom: 12,
+  },
+  emptyMessage: {
     fontSize: 16,
+    color: colors.lightBlueGray,
+    textAlign: "center",
+    lineHeight: 24,
   },
   fab: {
     position: "absolute",
