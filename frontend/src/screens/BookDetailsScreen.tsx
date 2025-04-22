@@ -7,13 +7,14 @@ import { useAuth } from "../context/AuthContext"
 import { API_URL } from "../config"
 import type { Book } from "../types"
 import { colors } from "../theme/colors"
+import { Ionicons } from "@expo/vector-icons"
 
 export default function BookDetailsScreen({ route, navigation }) {
   const { bookId } = route.params
   const [book, setBook] = useState<Book | null>(null)
   const [loading, setLoading] = useState(true)
   const [borrowing, setBorrowing] = useState(false)
-  const { token } = useAuth()
+  const { token, user } = useAuth()
 
   useEffect(() => {
     fetchBookDetails()
@@ -43,6 +44,12 @@ export default function BookDetailsScreen({ route, navigation }) {
   }
 
   const handleBorrowBook = async () => {
+    // Check if the book belongs to the current user
+    if (book?.userId === user?.id) {
+      alert("You cannot borrow your own book")
+      return
+    }
+
     try {
       setBorrowing(true)
       const response = await fetch(`${API_URL}/books/${bookId}/borrow`, {
@@ -86,6 +93,7 @@ export default function BookDetailsScreen({ route, navigation }) {
   }
 
   const placeholderImage = "https://via.placeholder.com/300x450/9FB3DF/123458?text=No+Cover"
+  const isOwnedByUser = book.userId === user?.id
 
   return (
     <ScrollView style={styles.container}>
@@ -93,6 +101,11 @@ export default function BookDetailsScreen({ route, navigation }) {
         <View style={styles.header}>
           <View style={styles.coverContainer}>
             <Image source={{ uri: book.coverImage || placeholderImage }} style={styles.coverImage} resizeMode="cover" />
+            {isOwnedByUser && (
+              <View style={styles.ownerBadge}>
+                <Ionicons name="checkmark-circle" size={24} color={colors.success} />
+              </View>
+            )}
           </View>
 
           <View style={styles.headerInfo}>
@@ -100,10 +113,23 @@ export default function BookDetailsScreen({ route, navigation }) {
             <Paragraph style={styles.author}>by {book.author}</Paragraph>
 
             <View style={styles.statusContainer}>
+              <Ionicons
+                name={book.available ? "checkmark-circle" : "close-circle"}
+                size={18}
+                color={book.available ? colors.success : colors.error}
+                style={styles.statusIcon}
+              />
               <Text style={[styles.statusText, book.available ? styles.availableText : styles.unavailableText]}>
                 {book.available ? "Available" : "Not Available"}
               </Text>
             </View>
+
+            {isOwnedByUser && (
+              <View style={styles.ownerContainer}>
+                <Ionicons name="person" size={18} color={colors.royalBlue} style={styles.statusIcon} />
+                <Text style={styles.ownerText}>This is your book</Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -129,7 +155,7 @@ export default function BookDetailsScreen({ route, navigation }) {
         </Card.Content>
 
         <Card.Actions style={styles.actions}>
-          {book.available ? (
+          {book.available && !isOwnedByUser ? (
             <Button
               mode="contained"
               style={styles.borrowButton}
@@ -137,8 +163,19 @@ export default function BookDetailsScreen({ route, navigation }) {
               onPress={handleBorrowBook}
               loading={borrowing}
               disabled={borrowing}
+              icon={({ size, color }) => <Ionicons name="bookmark-outline" size={size} color={color} />}
             >
               Borrow This Book
+            </Button>
+          ) : isOwnedByUser ? (
+            <Button
+              mode="outlined"
+              style={styles.editButton}
+              labelStyle={styles.editButtonLabel}
+              onPress={() => navigation.navigate("Manage", { screen: "AddEditBook", params: { book } })}
+              icon={({ size, color }) => <Ionicons name="create-outline" size={size} color={color} />}
+            >
+              Edit Book Details
             </Button>
           ) : (
             <Button
@@ -146,6 +183,7 @@ export default function BookDetailsScreen({ route, navigation }) {
               style={styles.unavailableButton}
               labelStyle={styles.unavailableButtonLabel}
               disabled
+              icon={({ size, color }) => <Ionicons name="close-circle-outline" size={size} color={color} />}
             >
               Currently Unavailable
             </Button>
@@ -179,12 +217,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
+    position: "relative",
   },
   coverImage: {
     width: 120,
     height: 180,
     borderRadius: 8,
     backgroundColor: colors.lightPeriwinkle,
+  },
+  ownerBadge: {
+    position: "absolute",
+    top: -10,
+    right: -10,
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 2,
   },
   headerInfo: {
     flex: 1,
@@ -203,6 +250,11 @@ const styles = StyleSheet.create({
   },
   statusContainer: {
     marginTop: 8,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  statusIcon: {
+    marginRight: 6,
   },
   statusText: {
     fontSize: 16,
@@ -219,6 +271,16 @@ const styles = StyleSheet.create({
   unavailableText: {
     backgroundColor: colors.error,
     color: colors.white,
+  },
+  ownerContainer: {
+    marginTop: 8,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  ownerText: {
+    fontSize: 14,
+    color: colors.royalBlue,
+    fontWeight: "bold",
   },
   divider: {
     height: 1,
@@ -274,6 +336,14 @@ const styles = StyleSheet.create({
   },
   unavailableButtonLabel: {
     color: colors.lightGray,
+  },
+  editButton: {
+    width: "100%",
+    paddingVertical: 8,
+    borderColor: colors.lavender,
+  },
+  editButtonLabel: {
+    color: colors.lavender,
   },
   centered: {
     flex: 1,
