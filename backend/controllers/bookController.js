@@ -1,9 +1,7 @@
 import pool from "../config/database.js"
 
-// Get all books
 export const getAllBooks = async (req, res) => {
   try {
-    // Check if the books table has the required columns
     const columns = [
       "id",
       "title",
@@ -17,7 +15,6 @@ export const getAllBooks = async (req, res) => {
       "updated_at as updatedAt",
     ]
 
-    // Check if cover_image column exists
     try {
       await pool.query("SELECT cover_image FROM books LIMIT 1")
       columns.push("cover_image as coverImage")
@@ -38,10 +35,8 @@ export const getAllBooks = async (req, res) => {
   }
 }
 
-// Get book by ID
 export const getBookById = async (req, res) => {
   try {
-    // Check if the books table has the required columns
     const columns = [
       "id",
       "title",
@@ -55,7 +50,6 @@ export const getBookById = async (req, res) => {
       "updated_at as updatedAt",
     ]
 
-    // Check if cover_image column exists
     try {
       await pool.query("SELECT cover_image FROM books LIMIT 1")
       columns.push("cover_image as coverImage")
@@ -83,12 +77,10 @@ export const getBookById = async (req, res) => {
   }
 }
 
-// Get books added by the current user
 export const getUserBooks = async (req, res) => {
   try {
     const userId = req.user.id
 
-    // Check if the books table has the required columns
     const columns = [
       "id",
       "title",
@@ -102,7 +94,6 @@ export const getUserBooks = async (req, res) => {
       "updated_at as updatedAt",
     ]
 
-    // Check if cover_image column exists
     try {
       await pool.query("SELECT cover_image FROM books LIMIT 1")
       columns.push("cover_image as coverImage")
@@ -127,31 +118,26 @@ export const getUserBooks = async (req, res) => {
   }
 }
 
-// Create a new book
 export const createBook = async (req, res) => {
   try {
     const { title, author, isbn, publishedYear, description, coverImage } = req.body
     const userId = req.user.id
 
-    // Validate input
     if (!title || !author || !isbn || !publishedYear) {
       return res.status(400).json({ message: "Title, author, ISBN, and published year are required" })
     }
 
-    // Check if ISBN already exists
     const [existingBooks] = await pool.query("SELECT * FROM books WHERE isbn = ?", [isbn])
 
     if (existingBooks.length > 0) {
       return res.status(400).json({ message: "Book with this ISBN already exists" })
     }
 
-    // Create new book
     const [result] = await pool.query(
       "INSERT INTO books (title, author, isbn, published_year, description, cover_image, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
       [title, author, isbn, publishedYear, description || null, coverImage || null, userId],
     )
 
-    // Check if the books table has the required columns
     const columns = [
       "id",
       "title",
@@ -165,7 +151,6 @@ export const createBook = async (req, res) => {
       "updated_at as updatedAt",
     ]
 
-    // Check if cover_image column exists
     try {
       await pool.query("SELECT cover_image FROM books LIMIT 1")
       columns.push("cover_image as coverImage")
@@ -193,19 +178,16 @@ export const createBook = async (req, res) => {
   }
 }
 
-// Update a book
 export const updateBook = async (req, res) => {
   try {
     const { title, author, isbn, publishedYear, description, coverImage } = req.body
     const bookId = req.params.id
     const userId = req.user.id
 
-    // Validate input
     if (!title || !author || !isbn || !publishedYear) {
       return res.status(400).json({ message: "Title, author, ISBN, and published year are required" })
     }
 
-    // Check if book exists
     const [existingBooks] = await pool.query("SELECT * FROM books WHERE id = ?", [bookId])
 
     if (existingBooks.length === 0) {
