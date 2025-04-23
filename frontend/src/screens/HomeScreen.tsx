@@ -17,7 +17,7 @@ export default function HomeScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
-  const [borrowingBookId, setBorrowingBookId] = useState<number | null>(null)
+  const [requestingBookId, setRequestingBookId] = useState<number | null>(null)
   const { token, user } = useAuth()
 
   useEffect(() => {
@@ -71,42 +71,53 @@ export default function HomeScreen({ navigation }) {
     fetchBooks()
   }
 
-  const handleBorrowBook = async (bookId: number, userId: number | undefined) => {
-    // Check if the book belongs to the current user
+  const handleRequestBook = async (bookId: number, userId: number | undefined) => {
     if (userId === user?.id) {
+      Alert.alert("Cannot Request", "You cannot request your own book.")
       return
     }
 
     try {
-      setBorrowingBookId(bookId)
+      setRequestingBookId(bookId)
 
-      const response = await fetch(`${API_URL}/books/${bookId}/borrow`, {
+      const response = await fetch(`${API_URL}/books/${bookId}/request`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ message: "I would like to borrow this book." }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to borrow book")
+        throw new Error(data.message || "Failed to request book")
       }
 
-      // Update book status locally
-      setBooks((prevBooks) => prevBooks.filter((book) => book.id !== bookId))
-      setDisplayedBooks((prevBooks) => prevBooks.filter((book) => book.id !== bookId))
+      setBooks((prevBooks) =>
+        prevBooks.map((book) =>
+          book.id === bookId
+            ? {
+                ...book,
+                requestStatus: {
+                  id: data.requestId,
+                  status: "pending",
+                  requestDate: new Date().toISOString(),
+                },
+              }
+            : book,
+        ),
+      )
 
-      // Show success message
-      Alert.alert("Success", "Book borrowed successfully", [
-        { text: "View My Books", onPress: () => navigation.navigate("Borrowed") },
+      Alert.alert("Success", "Book request sent successfully", [
+        { text: "View My Requests", onPress: () => navigation.navigate("Requests") },
         { text: "Continue Browsing", style: "cancel" },
       ])
     } catch (error) {
-      Alert.alert("Error", error instanceof Error ? error.message : "Failed to borrow book")
+      Alert.alert("Error", error instanceof Error ? error.message : "Failed to request book")
     } finally {
-      setBorrowingBookId(null)
+      setRequestingBookId(null)
     }
   }
 
@@ -175,16 +186,17 @@ export default function HomeScreen({ navigation }) {
             <BookCard
               book={item}
               onPress={() => navigation.navigate("BookDetails", { bookId: item.id })}
-              onBorrow={() => {
+              onRequest={() => {
                 if (item.userId === user?.id) {
-                  Alert.alert("Cannot Borrow", "You cannot borrow your own book.")
+                  Alert.alert("Cannot Request", "You cannot request your own book.")
                   return
                 }
-                handleBorrowBook(item.id, item.userId)
+                handleRequestBook(item.id, item.userId)
               }}
-              showBorrowButton={true}
-              isLoading={borrowingBookId === item.id}
+              showRequestButton={true}
+              isLoading={requestingBookId === item.id}
               isOwnedByUser={item.userId === user?.id}
+              ownerName={item.ownerName}
             />
           )}
           keyExtractor={(item) => item.id.toString()}
@@ -228,7 +240,7 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: 16,
-    paddingBottom: 80, // Add extra padding at the bottom
+    paddingBottom: 80,
   },
   centered: {
     flex: 1,
