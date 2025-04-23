@@ -13,7 +13,7 @@ export default function BookDetailsScreen({ route, navigation }) {
   const { bookId } = route.params
   const [book, setBook] = useState<Book | null>(null)
   const [loading, setLoading] = useState(true)
-  const [borrowing, setBorrowing] = useState(false)
+  const [requesting, setRequesting] = useState(false)
   const { token, user } = useAuth()
 
   useEffect(() => {
@@ -43,36 +43,35 @@ export default function BookDetailsScreen({ route, navigation }) {
     }
   }
 
-  const handleBorrowBook = async () => {
-    // Check if the book belongs to the current user
+  const handleRequestBook = async () => {
     if (book?.userId === user?.id) {
-      alert("You cannot borrow your own book")
+      alert("You cannot request your own book")
       return
     }
 
     try {
-      setBorrowing(true)
-      const response = await fetch(`${API_URL}/books/${bookId}/borrow`, {
+      setRequesting(true)
+      const response = await fetch(`${API_URL}/books/${bookId}/request`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ message: "I would like to borrow this book." }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to borrow book")
+        throw new Error(data.message || "Failed to request book")
       }
 
-      alert("Book borrowed successfully")
-      fetchBookDetails() // Refresh book details
-      navigation.navigate("Borrowed") // Navigate to borrowed books
+      alert("Book request sent successfully")
+      fetchBookDetails()
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to borrow book")
+      alert(error instanceof Error ? error.message : "Failed to request book")
     } finally {
-      setBorrowing(false)
+      setRequesting(false)
     }
   }
 
@@ -94,6 +93,7 @@ export default function BookDetailsScreen({ route, navigation }) {
 
   const placeholderImage = "https://via.placeholder.com/300x450/9FB3DF/123458?text=No+Cover"
   const isOwnedByUser = book.userId === user?.id
+  const hasPendingRequest = book.requestStatus && book.requestStatus.status === "pending"
 
   return (
     <ScrollView style={styles.container}>
@@ -130,6 +130,13 @@ export default function BookDetailsScreen({ route, navigation }) {
                 <Text style={styles.ownerText}>This is your book</Text>
               </View>
             )}
+
+            {hasPendingRequest && (
+              <View style={styles.requestContainer}>
+                <Ionicons name="time" size={18} color={colors.lavender} style={styles.statusIcon} />
+                <Text style={styles.requestText}>Request pending</Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -147,6 +154,13 @@ export default function BookDetailsScreen({ route, navigation }) {
               <Text style={styles.value}>{book.publishedYear}</Text>
             </View>
 
+            {book.ownerName && !isOwnedByUser && (
+              <View style={styles.detailRow}>
+                <Text style={styles.label}>Owner:</Text>
+                <Text style={styles.value}>{book.ownerName}</Text>
+              </View>
+            )}
+
             <Divider style={styles.divider} />
 
             <Text style={styles.descriptionTitle}>Description</Text>
@@ -155,17 +169,17 @@ export default function BookDetailsScreen({ route, navigation }) {
         </Card.Content>
 
         <Card.Actions style={styles.actions}>
-          {book.available && !isOwnedByUser ? (
+          {book.available && !isOwnedByUser && !hasPendingRequest ? (
             <Button
               mode="contained"
-              style={styles.borrowButton}
+              style={styles.requestButton}
               labelStyle={styles.buttonLabel}
-              onPress={handleBorrowBook}
-              loading={borrowing}
-              disabled={borrowing}
-              icon={({ size, color }) => <Ionicons name="bookmark-outline" size={size} color={color} />}
+              onPress={handleRequestBook}
+              loading={requesting}
+              disabled={requesting}
+              icon={({ size, color }) => <Ionicons name="send" size={size} color={color} />}
             >
-              Borrow This Book
+              Request to Borrow
             </Button>
           ) : isOwnedByUser ? (
             <Button
@@ -176,6 +190,16 @@ export default function BookDetailsScreen({ route, navigation }) {
               icon={({ size, color }) => <Ionicons name="create-outline" size={size} color={color} />}
             >
               Edit Book Details
+            </Button>
+          ) : hasPendingRequest ? (
+            <Button
+              mode="outlined"
+              style={styles.pendingButton}
+              labelStyle={styles.pendingButtonLabel}
+              disabled
+              icon={({ size, color }) => <Ionicons name="time" size={size} color={color} />}
+            >
+              Request Pending
             </Button>
           ) : (
             <Button
@@ -282,6 +306,16 @@ const styles = StyleSheet.create({
     color: colors.royalBlue,
     fontWeight: "bold",
   },
+  requestContainer: {
+    marginTop: 8,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  requestText: {
+    fontSize: 14,
+    color: colors.lavender,
+    fontWeight: "bold",
+  },
   divider: {
     height: 1,
     backgroundColor: colors.lightGray,
@@ -320,7 +354,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 16,
   },
-  borrowButton: {
+  requestButton: {
     width: "100%",
     paddingVertical: 8,
     backgroundColor: colors.royalBlue,
@@ -343,6 +377,14 @@ const styles = StyleSheet.create({
     borderColor: colors.lavender,
   },
   editButtonLabel: {
+    color: colors.lavender,
+  },
+  pendingButton: {
+    width: "100%",
+    paddingVertical: 8,
+    borderColor: colors.lavender,
+  },
+  pendingButtonLabel: {
     color: colors.lavender,
   },
   centered: {
