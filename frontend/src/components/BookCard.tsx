@@ -1,33 +1,72 @@
 import type React from "react"
-import { View, StyleSheet, Image } from "react-native"
+import { View, StyleSheet, Image, Dimensions } from "react-native"
 import { Card, Title, Paragraph, Button, Badge, Text } from "react-native-paper"
 import type { Book } from "../types"
 import { colors } from "../theme/colors"
+import { Ionicons } from "@expo/vector-icons"
 
 interface BookCardProps {
   book: Book
   onPress: () => void
-  onBorrow?: () => void
+  onRequest?: () => void
   onReturn?: () => void
-  showBorrowButton?: boolean
+  showRequestButton?: boolean
   showReturnButton?: boolean
   borrowedDate?: string
   dueDate?: string
   isLoading?: boolean
+  isOwnedByUser?: boolean
+  ownerName?: string
+  compact?: boolean
 }
+
+const { width } = Dimensions.get("window")
 
 const BookCard: React.FC<BookCardProps> = ({
   book,
   onPress,
-  onBorrow,
+  onRequest,
   onReturn,
-  showBorrowButton = false,
+  showRequestButton = false,
   showReturnButton = false,
   borrowedDate,
   dueDate,
   isLoading = false,
+  isOwnedByUser = false,
+  ownerName,
+  compact = false,
 }) => {
   const placeholderImage = "https://via.placeholder.com/150x200/9FB3DF/123458?text=No+Cover"
+  const hasPendingRequest = book.requestStatus && book.requestStatus.status === "pending"
+
+  if (compact) {
+    return (
+      <Card style={[styles.compactCard, !book.available && styles.unavailableCard]} onPress={onPress}>
+        <View style={styles.compactImageContainer}>
+          <Image
+            source={{ uri: book.coverImage || placeholderImage }}
+            style={styles.compactCoverImage}
+            resizeMode="cover"
+          />
+          {!book.available && <Badge style={styles.compactUnavailableBadge}>Unavailable</Badge>}
+          {isOwnedByUser && <Badge style={styles.compactOwnedBadge}>Your Book</Badge>}
+          {hasPendingRequest && <Badge style={styles.compactPendingBadge}>Pending</Badge>}
+        </View>
+        <Card.Content style={styles.compactContent}>
+          <Title style={styles.compactTitle} numberOfLines={2}>
+            {book.title}
+          </Title>
+          <Paragraph style={styles.compactAuthor} numberOfLines={1}>
+            by {book.author}
+          </Paragraph>
+          <View style={styles.compactInfoRow}>
+            <Text style={styles.compactInfoLabel}>Year:</Text>
+            <Text style={styles.compactInfoValue}>{book.publishedYear}</Text>
+          </View>
+        </Card.Content>
+      </Card>
+    )
+  }
 
   return (
     <Card style={[styles.card, !book.available && !showReturnButton && styles.unavailableCard]} onPress={onPress}>
@@ -35,6 +74,8 @@ const BookCard: React.FC<BookCardProps> = ({
         <View style={styles.imageContainer}>
           <Image source={{ uri: book.coverImage || placeholderImage }} style={styles.coverImage} resizeMode="cover" />
           {!book.available && !showReturnButton && <Badge style={styles.unavailableBadge}>Not Available</Badge>}
+          {isOwnedByUser && <Badge style={styles.ownedBadge}>Your Book</Badge>}
+          {hasPendingRequest && <Badge style={styles.pendingBadge}>Request Sent</Badge>}
         </View>
 
         <View style={styles.detailsContainer}>
@@ -44,6 +85,15 @@ const BookCard: React.FC<BookCardProps> = ({
           <Paragraph style={styles.author} numberOfLines={1}>
             by {book.author}
           </Paragraph>
+
+          {ownerName && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Owner:</Text>
+              <Text style={styles.infoValue} numberOfLines={1}>
+                {ownerName}
+              </Text>
+            </View>
+          )}
 
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>ISBN:</Text>
@@ -73,7 +123,7 @@ const BookCard: React.FC<BookCardProps> = ({
             </View>
           )}
 
-          {showBorrowButton && book.available && (
+          {showRequestButton && book.available && !isOwnedByUser && !hasPendingRequest && (
             <Button
               mode="contained"
               style={styles.actionButton}
@@ -81,15 +131,43 @@ const BookCard: React.FC<BookCardProps> = ({
               disabled={isLoading}
               onPress={(e) => {
                 e.stopPropagation()
-                if (onBorrow) onBorrow()
+                if (onRequest) onRequest()
               }}
+              icon={({ size, color }) => <Ionicons name="send" size={size} color={color} />}
             >
-              Borrow
+              Request Book
             </Button>
           )}
 
-          {showBorrowButton && !book.available && (
-            <Button mode="outlined" style={styles.actionButton} disabled>
+          {showRequestButton && book.available && !isOwnedByUser && hasPendingRequest && (
+            <Button
+              mode="outlined"
+              style={styles.pendingButton}
+              disabled
+              icon={({ size, color }) => <Ionicons name="time" size={size} color={color} />}
+            >
+              Request Pending
+            </Button>
+          )}
+
+          {showRequestButton && book.available && isOwnedByUser && (
+            <Button
+              mode="outlined"
+              style={styles.ownedButton}
+              disabled
+              icon={({ size, color }) => <Ionicons name="book-outline" size={size} color={color} />}
+            >
+              Your Book
+            </Button>
+          )}
+
+          {showRequestButton && !book.available && (
+            <Button
+              mode="outlined"
+              style={styles.actionButton}
+              disabled
+              icon={({ size, color }) => <Ionicons name="close-circle" size={size} color={color} />}
+            >
               Not Available
             </Button>
           )}
@@ -104,6 +182,7 @@ const BookCard: React.FC<BookCardProps> = ({
                 e.stopPropagation()
                 if (onReturn) onReturn()
               }}
+              icon={({ size, color }) => <Ionicons name="return-down-back" size={size} color={color} />}
             >
               Return Book
             </Button>
@@ -148,6 +227,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.error,
     color: colors.white,
   },
+  ownedBadge: {
+    position: "absolute",
+    top: 8,
+    right: -10,
+    backgroundColor: colors.success,
+    color: colors.white,
+  },
+  pendingBadge: {
+    position: "absolute",
+    top: 8,
+    right: -10,
+    backgroundColor: colors.lavender,
+    color: colors.white,
+  },
   detailsContainer: {
     flex: 1,
     justifyContent: "space-between",
@@ -186,9 +279,92 @@ const styles = StyleSheet.create({
     marginTop: 12,
     backgroundColor: colors.royalBlue,
   },
+  ownedButton: {
+    marginTop: 12,
+    borderColor: colors.success,
+  },
+  pendingButton: {
+    marginTop: 12,
+    borderColor: colors.lavender,
+  },
   returnButton: {
     marginTop: 12,
     backgroundColor: colors.lavender,
+  },
+
+  compactCard: {
+    borderRadius: 12,
+    overflow: "hidden",
+    elevation: 3,
+    backgroundColor: colors.white,
+    flex: 1,
+    margin: 6,
+  },
+  compactImageContainer: {
+    position: "relative",
+    width: "100%",
+    height: 160,
+  },
+  compactCoverImage: {
+    width: "100%",
+    height: "100%",
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    backgroundColor: colors.lightPeriwinkle,
+  },
+  compactContent: {
+    padding: 8,
+  },
+  compactTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: colors.darkNavy,
+    marginBottom: 2,
+    lineHeight: 18,
+  },
+  compactAuthor: {
+    fontSize: 12,
+    color: colors.lightBlueGray,
+    marginBottom: 4,
+  },
+  compactInfoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 2,
+  },
+  compactInfoLabel: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: colors.darkNavy,
+    marginRight: 4,
+  },
+  compactInfoValue: {
+    fontSize: 12,
+    color: colors.black,
+  },
+  compactUnavailableBadge: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: colors.error,
+    color: colors.white,
+    fontSize: 10,
+  },
+  compactOwnedBadge: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: colors.success,
+    color: colors.white,
+    fontSize: 10,
+  },
+  compactPendingBadge: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: colors.lavender,
+    color: colors.white,
+    fontSize: 10,
   },
 })
 
