@@ -7,7 +7,7 @@ const dbConfig = {
   host: process.env.DB_HOST || "localhost",
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "lib_db",
+  database: process.env.DB_NAME || "book_borrowing_app",
 }
 
 const pool = mysql.createPool(dbConfig)
@@ -73,17 +73,50 @@ export const initializeDatabase = async () => {
     }
 
     await pool.query(`
+      CREATE TABLE IF NOT EXISTS borrow_requests (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        book_id INT NOT NULL,
+        requester_id INT NOT NULL,
+        owner_id INT NOT NULL,
+        status ENUM('pending', 'accepted', 'rejected') DEFAULT 'pending',
+        message TEXT,
+        request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        response_date DATETIME NULL,
+        FOREIGN KEY (book_id) REFERENCES books(id),
+        FOREIGN KEY (requester_id) REFERENCES users(id),
+        FOREIGN KEY (owner_id) REFERENCES users(id)
+      )
+    `)
+
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS borrowed_books (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
         book_id INT NOT NULL,
+        request_id INT NULL,
         borrowed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         due_date DATETIME NOT NULL,
         returned_at DATETIME NULL,
         FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (book_id) REFERENCES books(id)
+        FOREIGN KEY (book_id) REFERENCES books(id),
+        FOREIGN KEY (request_id) REFERENCES borrow_requests(id)
       )
     `)
+
+    try {
+      await pool.query(`
+        SELECT request_id FROM borrowed_books LIMIT 1
+      `)
+    } catch (error) {
+      if (error.code === "ER_BAD_FIELD_ERROR") {
+        console.log("Adding missing request_id column to borrowed_books table")
+        await pool.query(`
+          ALTER TABLE borrowed_books 
+          ADD COLUMN request_id INT NULL AFTER book_id,
+          ADD FOREIGN KEY (request_id) REFERENCES borrow_requests(id)
+        `)
+      }
+    }
 
     console.log("Database initialized successfully")
     return true
