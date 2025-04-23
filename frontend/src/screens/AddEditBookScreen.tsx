@@ -19,6 +19,9 @@ export default function AddEditBookScreen({ route, navigation }) {
   const [description, setDescription] = useState("")
   const [coverImage, setCoverImage] = useState("")
   const [loading, setLoading] = useState(false)
+  const [imageLoading, setImageLoading] = useState(false)
+  const [imageError, setImageError] = useState(false)
+  const [showImagePreview, setShowImagePreview] = useState(false)
 
   const { token } = useAuth()
 
@@ -30,6 +33,9 @@ export default function AddEditBookScreen({ route, navigation }) {
       setPublishedYear(book.publishedYear.toString())
       setDescription(book.description || "")
       setCoverImage(book.coverImage || "")
+      if (book.coverImage) {
+        setShowImagePreview(true)
+      }
     }
   }, [isEditing, book])
 
