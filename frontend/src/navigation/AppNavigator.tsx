@@ -12,6 +12,7 @@ import AddEditBookScreen from "../screens/AddEditBookScreen"
 import { Ionicons } from "@expo/vector-icons"
 import { colors } from "../theme/colors"
 import ProfileScreen from "../screens/ProfileSreen"
+import RequestsScreen from "../screens/RequestScreen"
 
 const Stack = createNativeStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -57,6 +58,7 @@ function BorrowedStack() {
       }}
     >
       <Stack.Screen name="BorrowedBooks" component={BorrowedBooksScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="BookDetails" component={BookDetailsScreen} options={{ title: "Book Details" }} />
     </Stack.Navigator>
   )
 }
@@ -73,13 +75,14 @@ function ManageStack() {
     >
       <Stack.Screen name="ManageBooks" component={ManageBooksScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AddEditBook" component={AddEditBookScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="BookDetails" component={BookDetailsScreen} options={{ title: "Book Details" }} />
     </Stack.Navigator>
   )
 }
 
 function ProfileStack() {
   return (
-    <Stack.Navigator 
+    <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: colors.darkNavy },
         headerTintColor: colors.white,
@@ -88,6 +91,22 @@ function ProfileStack() {
       }}
     >
       <Stack.Screen name="UserProfile" component={ProfileScreen} options={{ headerShown: false }} />
+    </Stack.Navigator>
+  )
+}
+
+function RequestsStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.darkNavy },
+        headerTintColor: colors.white,
+        headerTitleStyle: { fontWeight: "bold" },
+        contentStyle: { backgroundColor: colors.white },
+      }}
+    >
+      <Stack.Screen name="BookRequests" component={RequestsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="BookDetails" component={BookDetailsScreen} options={{ title: "Book Details" }} />
     </Stack.Navigator>
   )
 }
@@ -103,6 +122,8 @@ function MainTabs() {
             iconName = focused ? "book" : "book-outline"
           } else if (route.name === "Borrowed") {
             iconName = focused ? "bookmark" : "bookmark-outline"
+          } else if (route.name === "Requests") {
+            iconName = focused ? "mail" : "mail-outline"
           } else if (route.name === "Manage") {
             iconName = focused ? "library" : "library-outline"
           } else if (route.name === "Profile") {
@@ -129,6 +150,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Home" component={HomeStack} />
       <Tab.Screen name="Borrowed" component={BorrowedStack} />
+      <Tab.Screen name="Requests" component={RequestsStack} />
       <Tab.Screen name="Manage" component={ManageStack} />
       <Tab.Screen name="Profile" component={ProfileStack} />
     </Tab.Navigator>
@@ -139,7 +161,7 @@ export default function AppNavigator() {
   const { token, isLoading } = useAuth()
 
   if (isLoading) {
-    return null 
+    return null
   }
 
   return (
