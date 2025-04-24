@@ -8,7 +8,7 @@ import { StatusBar } from "expo-status-bar"
 export default function App() {
   return (
     <PaperProvider theme={theme}>
-      <StatusBar style="dark" />
+      {/* <StatusBar style="dark" /> */}
       <AuthProvider>
         <NavigationContainer>
           <AppNavigator />
