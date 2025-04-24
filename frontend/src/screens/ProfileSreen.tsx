@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { View, StyleSheet, ScrollView, Image, TouchableOpacity, RefreshControl, Alert } from "react-native"
+import { View, StyleSheet, ScrollView, Image, RefreshControl, Alert } from "react-native"
 import { Text, Button, ActivityIndicator, Card } from "react-native-paper"
 import { useAuth } from "../context/AuthContext"
 import { API_URL } from "../config"
@@ -67,10 +67,7 @@ export default function ProfileScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Profile</Text>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={24} color={colors.white} />
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Profile</Text>
       </View>
 
       <ScrollView
@@ -107,7 +104,6 @@ export default function ProfileScreen({ navigation }) {
             <Button
               mode="contained"
               style={styles.actionButton}
-              icon="book-open-variant"
               onPress={() => navigation.navigate("Home")}
             >
               Browse Available Books
@@ -116,16 +112,14 @@ export default function ProfileScreen({ navigation }) {
             <Button
               mode="contained"
               style={[styles.actionButton, { backgroundColor: colors.lavender }]}
-              icon="bookmark"
               onPress={() => navigation.navigate("Borrowed")}
             >
-              My Borrowed Books
+              Borrowed Books
             </Button>
 
             <Button
               mode="contained"
               style={[styles.actionButton, { backgroundColor: colors.lightBlueGray }]}
-              icon="book-plus"
               onPress={() => navigation.navigate("Manage", { screen: "AddEditBook" })}
             >
               Add New Book
@@ -148,7 +142,7 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: colors.darkNavy,
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 20,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -180,6 +174,7 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     marginRight: 20,
+    marginBottom:5,
   },
   avatar: {
     width: 80,
