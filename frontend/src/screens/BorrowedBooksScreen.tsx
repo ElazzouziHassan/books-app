@@ -115,7 +115,7 @@ export default function BorrowedBooksScreen({ navigation }) {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>
-            <Ionicons name="bookmark" size={22} color={colors.white} style={styles.headerIcon} /> My Borrowed Books
+             Borrowed
           </Text>
         </View>
         <View style={styles.emptyContainer}>
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: colors.darkNavy,
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 20,
     marginBottom: 16,
   },
