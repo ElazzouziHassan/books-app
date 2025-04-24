@@ -158,7 +158,7 @@ export default function ManageBooksScreen({ navigation }) {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>
-          <Ionicons name="settings" size={22} color={colors.white} style={styles.headerIcon} /> Manage My Books
+          Dashboard
         </Text>
       </View>
 
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: colors.darkNavy,
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 20,
     marginBottom: 16,
   },
