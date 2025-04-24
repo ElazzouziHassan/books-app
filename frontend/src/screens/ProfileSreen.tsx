@@ -169,8 +169,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
     backgroundColor: colors.lightPeriwinkle,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    borderBottomLeftRadius: 27,
+    borderBottomRightRadius: 27,
   },
   avatarContainer: {
     marginRight: 20,
