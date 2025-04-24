@@ -274,7 +274,7 @@ export default function RequestsScreen({ navigation }) {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>
-          <Ionicons name="mail" size={22} color={colors.white} style={styles.headerIcon} /> Book Requests
+          Requests
         </Text>
       </View>
 
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: colors.darkNavy,
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 20,
   },
   headerTitle: {
