@@ -149,7 +149,7 @@ export default function HomeScreen({ navigation }) {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>
-          <Ionicons name="library" size={22} color={colors.white} style={styles.headerIcon} /> Available Books
+           Books
         </Text>
       </View>
 
@@ -217,16 +217,17 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: colors.darkNavy,
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 20,
     marginBottom: 16,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "bold",
     color: colors.white,
     flexDirection: "row",
     alignItems: "center",
+    // marginTop:15,
   },
   headerIcon: {
     marginRight: 8,
