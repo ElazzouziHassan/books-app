@@ -12,7 +12,6 @@ import { Ionicons } from "@expo/vector-icons"
 
 const { width } = Dimensions.get("window")
 const COLUMN_COUNT = 2
-const GRID_SPACING = 12
 
 export default function ManageBooksScreen({ navigation }) {
   const [books, setBooks] = useState<Book[]>([])
